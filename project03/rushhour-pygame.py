@@ -6,7 +6,94 @@ class RushHour(SearchProblem):
         self.initial_state = initial_state
 
     def actions(self, state):
-        pass
+        tmp = state
+
+        # ========= 게임판 생성 ====================================================
+        #  
+        # state가 문자열로 들어오기 때문에 보드판을 생성해 각 차들의 수직 수평 방향 구분 
+        board = [[], [], [], [], [], []]
+        
+        for i in range(6):
+            for j in range(6):
+                if len(board[i]) == 6:
+                    continue
+                board[i].append(state[j])
+            state = state[j+1:]
+        
+        horizontal = {} # 가로로 움직이는 차들의 딕셔너리
+        vertical = {} # 세로로 움직이는 차들의 딕셔너리
+
+        # ================ 각 차들이 수평, 수직 방향인지 나눠 주는 코딩 ==============
+
+        # 수평 방향(가로)으로 움직이는 차들을 horizontal 딕셔너리에 추가
+        # ex) horizontal = {"A" : [[0,1], [0,2]]....}
+        for row in range(6):
+            for col in range(5):
+                char = board[row][col]
+                if char == 'o':
+                    continue
+                if char == board[row][col + 1]:
+                    if char in horizontal:
+                        horizontal[char].append([row, col + 1])
+                    else:
+                        horizontal[char] = [[row, col], [row, col + 1]]            
+
+        # 수직 방향(세로)으로 움직이는 차들을 vertical 딕셔너리에 추가
+        # ex) vertical = {"B": [[0,1], [1,1]]...}
+        for col in range(6):
+            for row in range(5):
+                char = board[row][col]
+                if char == 'o':
+                    continue
+                if char == board[row+1][col]:
+                    if char in vertical: 
+                        vertical[char].append([row+1, col])
+                    else:
+                        vertical[char] = [[row, col], [row + 1, col]]
+
+
+        # ========== 차가 이동할 수 있는 모든 경우의 수에 관한 코딩 ================
+
+        # 각 문자들이 움직일 수 있는 경우의 수를 can_move리스트에 ("char", "이동 가능한 칸 수")같은 튜플 형태로 추가
+        can_move = []
+
+        # 수평 방향(가로)으로 움직일 수 차들의 action에 추가  
+        for kr, rloc in horizontal.items():
+
+            r = rloc[0][0] # 하나의 차가 공통적으로 가지는 row의 위치
+            left_col = rloc[0][1] # 가장 왼쪽 column
+            right_col = rloc[-1][1] # 가장 오른쪽 column
+
+            for step in range(1, 5):
+                if left_col - step < 0 or board[r][left_col-step] != 'o': # 보드판을 벗어나거나 빈칸이 아닌 경우 True
+                    break
+                can_move.append((kr, -step)) # 왼쪽으로 움직일 수 있는 경우의 수
+
+            for step in range(1,5):
+                if right_col + step > 5 or board[r][right_col+step] != 'o':
+                    break
+                can_move.append((kr, step)) # 오른쪽으로 움직일 수 있는 경우의 수
+
+        # 수직 방향(세로)으로 움직일 수 있는 차들의 action
+        for kc, cloc in vertical.items():
+
+            c = cloc[0][1] # 하나의 차가 공통적으로 가지는 column의 위치
+            top_col = cloc[0][0] # 가장 위의 위치
+            bottom_col = cloc[-1][0] # 가장 아래의 위치
+
+            for step in range(1, 5):
+                if top_col - step < 0 or board[top_col-step][c] != 'o': # 수평방향에 조건과 거의 비슷
+                    break
+                can_move.append((kc, -step)) # 위로 움직일 수 있는 경우의 수
+
+            for step in range(1, 5):
+                if bottom_col + step > 5 or board[bottom_col+step][c] != 'o':
+                    break
+                can_move.append((kc, step)) # 아래로 움직일 수 있는 경우의 수
+            
+        state = tmp
+        return can_move
+        # 결과 예시 : can_move = [("A", 2), ("B", 1)....] -> ("막대의 문자", 이동가능한 칸수)의 튜플로 이루어진 리스트가 can_move가 됨.
 
     def result(self, state, action):
         pass
